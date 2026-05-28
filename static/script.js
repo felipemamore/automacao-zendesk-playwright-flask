@@ -1,4 +1,3 @@
-// --- Lógica do Modo Escuro ---
 function toggleDarkMode() {
     const html = document.documentElement;
     const icon = document.getElementById('themeIcon');
@@ -21,7 +20,6 @@ if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.match
     document.documentElement.classList.remove('dark');
 }
 
-// --- Variáveis Globais ---
 let ticketsEncontradosLista = [];
 let listaPendentes = [];
 let totalTicketsTXT = 0;
@@ -30,10 +28,8 @@ let indexAtual = 0;
 let emExecucao = false;
 let pausado = false;
 
-// Elementos da Tela
 let telaConfiguracao, telaResultados, formAutomacao, consoleArea, btnIniciar, controlesExecucao, btnPausar, consolePanel, formPanel;
 
-// Garante que o mapeamento só ocorra com a árvore HTML pronta
 document.addEventListener('DOMContentLoaded', () => {
     telaConfiguracao = document.getElementById('telaConfiguracao');
     telaResultados = document.getElementById('telaResultados');
@@ -50,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// FUNÇÃO TOGGLE REFORMULADA: Garante transições limpas e sem sumiço do botão
 function toggleConsole() {
     if(consolePanel.classList.contains('hidden')) {
         consolePanel.classList.remove('hidden');
@@ -63,9 +58,7 @@ function toggleConsole() {
     }
 }
 
-// ==========================================
 // FLUXO DE EXECUÇÃO E INTEGRAÇÃO FLASK
-// ==========================================
 async function iniciarFormulario(e) {
     e.preventDefault();
 
@@ -77,7 +70,6 @@ async function iniciarFormulario(e) {
         return;
     }
 
-    // CORREÇÃO: Usando toLowerCase() correto do JavaScript
     palavrasChaveArray = palavrasInput.split(',').map(p => p.trim().toLowerCase()).filter(p => p.length > 0);
 
     btnIniciar.classList.add('hidden');
@@ -242,9 +234,7 @@ function voltarParaConfig() {
     btnIniciar.classList.remove('hidden');
 }
 
-// ==========================================
 // MÓDULO DE EXPORTAÇÃO
-// ==========================================
 const getTimestamp = () => new Date().toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
 
 function baixarArquivo(blob, nomeArquivo) {

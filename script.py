@@ -3,25 +3,21 @@ import os
 from flask import Flask, render_template, request, jsonify
 from playwright.sync_api import sync_playwright
 
-# --- AJUSTE PARA PYINSTALLER ENCONTRAR O HTML/CSS ---
 if getattr(sys, 'frozen', False):
-    # Se estiver rodando como .exe compilado
     diretorio_raiz = sys._MEIPASS
     app = Flask(__name__,
                 template_folder=os.path.join(diretorio_raiz, 'templates'),
                 static_folder=os.path.join(diretorio_raiz, 'static'))
 else:
-    # Se estiver rodando normal no seu PyCharm
     app = Flask(__name__)
 
 
-# Rota principal para carregar o HTML da interface
 @app.route('/')
 def home():
     return render_template('index.html')
 
 
-# Rota para sincronizar a memória (Quais tickets já foram feitos/encontrados)
+# Essa é a rota para sincronizar a memória (Quais tickets já foram feitos/encontrados)
 @app.route('/api/estado', methods=['GET'])
 def obter_estado():
     processados = []
@@ -38,7 +34,7 @@ def obter_estado():
     return jsonify({"processados": processados, "encontrados": encontrados})
 
 
-# Rota que executa o Playwright para UM ticket de cada vez
+# Essa é a rota que executa o Playwright para UM ticket de cada vez
 @app.route('/api/processar_ticket', methods=['POST'])
 def processar_ticket():
     dados = request.json
@@ -54,12 +50,9 @@ def processar_ticket():
 
     try:
         with sync_playwright() as p:
-            # Conecta ao Chrome já aberto
             navegador = p.chromium.connect_over_cdp("http://127.0.0.1:9222")
             contexto = navegador.contexts[0]
 
-            # === CORREÇÃO APLICADA AQUI ===
-            # Ao invés de usar a pages[0] (que é o seu console), criamos uma NOVA aba
             pagina = contexto.new_page()
 
             url_ticket = f"https://cxsenior.zendesk.com/agent/tickets/{numero_ticket}"
@@ -82,7 +75,6 @@ def processar_ticket():
             except Exception:
                 pass
 
-                # Aguarda os 8 segundos solicitados
             pagina.wait_for_timeout(8000)
 
             # Verifica as palavras-chave
@@ -94,16 +86,11 @@ def processar_ticket():
                 resultado["palavras_achadas"] = palavras_encontradas
                 with open("tickets_encontrados.txt", "a") as arquivo_salvar:
                     arquivo_salvar.write(f"{numero_ticket}\n")
-
-            # === OTIMIZAÇÃO EXTRA ===
-            # Não precisamos mais caçar o botão de fechar do Zendesk.
-            # Como abrimos uma aba real do navegador, basta fechar a aba inteira!
             try:
                 pagina.close()
             except Exception:
                 pass
 
-                # --- REGISTA NA MEMÓRIA ---
             with open("tickets_processados.txt", "a") as f_proc:
                 f_proc.write(f"{numero_ticket}\n")
 
