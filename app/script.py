@@ -6,8 +6,8 @@ from playwright.sync_api import sync_playwright
 if getattr(sys, 'frozen', False):
     diretorio_raiz = sys._MEIPASS
     app = Flask(__name__,
-                template_folder=os.path.join(diretorio_raiz, 'templates'),
-                static_folder=os.path.join(diretorio_raiz, 'static'))
+                template_folder=os.path.join(diretorio_raiz, '../templates'),
+                static_folder=os.path.join(diretorio_raiz, '../static'))
 else:
     app = Flask(__name__)
 
@@ -23,12 +23,12 @@ def obter_estado():
     processados = []
     encontrados = []
 
-    if os.path.exists("tickets_processados.txt"):
-        with open("tickets_processados.txt", "r") as f:
+    if os.path.exists("../tickets_processados.txt"):
+        with open("../tickets_processados.txt", "r") as f:
             processados = [linha.strip() for font_line in f if (linha := font_line.strip())]
 
-    if os.path.exists("tickets_encontrados.txt"):
-        with open("tickets_encontrados.txt", "r") as f:
+    if os.path.exists("../tickets_encontrados.txt"):
+        with open("../tickets_encontrados.txt", "r") as f:
             encontrados = [linha.strip() for font_line in f if (linha := font_line.strip())]
 
     return jsonify({"processados": processados, "encontrados": encontrados})
@@ -63,7 +63,7 @@ def processar_ticket():
                 resultado["erro"] = "Timeout na URL"
                 with open("tickets_erro_timeout.txt", "a") as f_erro:
                     f_erro.write(f"{numero_ticket}\n")
-                with open("tickets_processados.txt", "a") as f_proc:
+                with open("../tickets_processados.txt", "a") as f_proc:
                     f_proc.write(f"{numero_ticket}\n")
                 pagina.close()  # Garante o fechamento da aba se der timeout
                 return jsonify(resultado)
@@ -84,14 +84,14 @@ def processar_ticket():
             if palavras_encontradas:
                 resultado["encontrado"] = True
                 resultado["palavras_achadas"] = palavras_encontradas
-                with open("tickets_encontrados.txt", "a") as arquivo_salvar:
+                with open("../tickets_encontrados.txt", "a") as arquivo_salvar:
                     arquivo_salvar.write(f"{numero_ticket}\n")
             try:
                 pagina.close()
             except Exception:
                 pass
 
-            with open("tickets_processados.txt", "a") as f_proc:
+            with open("../tickets_processados.txt", "a") as f_proc:
                 f_proc.write(f"{numero_ticket}\n")
 
     except Exception as e:
