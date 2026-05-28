@@ -1,0 +1,16 @@
+.venv/
+venv/
+ENV/
+
+__pycache__/
+*.pyc
+
+build/
+dist/
+*.spec
+
+tickets.txt
+tickets_processados.txt
+tickets_encontrados.txt
+tickets_erro_timeout.txt
+.chrome_debug_log.txt

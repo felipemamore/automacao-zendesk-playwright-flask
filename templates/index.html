@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zendesk Auto | Resultados</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        zd: { green: '#03363d', hover: '#174f58', dark: '#011f24' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden relative border border-gray-200 dark:border-gray-700 min-h-[600px] flex flex-col transition-all duration-300">
+
+        <div id="telaConfiguracao" class="flex flex-col md:flex-row h-full flex-grow fade-in transition-all duration-300 relative">
+
+            <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
+                <button type="button" onclick="toggleConsole()" class="p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-all shadow-sm border border-gray-200 dark:border-gray-600" title="Mostrar/Ocultar Console">
+                    <i class="ph ph-sidebar-simple text-xl"></i>
+                </button>
+                <button type="button" onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-all shadow-sm border border-gray-200 dark:border-gray-600" title="Alternar Tema">
+                    <i id="themeIcon" class="ph ph-moon text-xl"></i>
+                </button>
+            </div>
+
+            <div id="formPanel" class="w-full md:w-1/2 p-8 flex flex-col border-r border-gray-100 dark:border-gray-700 transition-all duration-300 relative bg-white dark:bg-gray-800">
+                <div class="mb-8 mt-4">
+                    <h1 class="text-3xl font-bold text-zd-green dark:text-emerald-400 flex items-center gap-3">
+                        <i class="ph ph-robot text-emerald-500"></i> Zendesk Auto
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Configure e acompanhe a sua varredura automática.</p>
+                </div>
+
+                <form id="formAutomacao" class="space-y-5 flex-grow">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Palavras-chave</label>
+                        <input type="text" id="inputPalavras" required placeholder="Ex: workflow, bpm" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white rounded-lg outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Lista de Tickets (.txt)</label>
+                        <input type="file" id="inputArquivo" accept=".txt" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bold file:bg-emerald-100 file:text-emerald-800 transition-all">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" id="btnIniciar" class="w-full bg-zd-green dark:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg flex justify-center items-center gap-2">
+                            <i class="ph ph-play-circle text-xl"></i> Iniciar Varredura
+                        </button>
+                        <div id="controlesExecucao" class="hidden flex gap-2 w-full">
+                            <button type="button" id="btnPausar" onclick="pausarRetomar()" class="flex-1 bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 shadow-md">
+                                <i class="ph ph-pause text-xl"></i> Pausar
+                            </button>
+                            <button type="button" id="btnEncerrar" onclick="forcarFim()" class="flex-1 bg-red-500 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 shadow-md">
+                                <i class="ph ph-stop text-xl"></i> Parar e Ver
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="consolePanel" class="w-full md:w-1/2 bg-gray-900 dark:bg-black p-6 flex flex-col relative transition-all duration-300">
+                <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="ph ph-terminal-window"></i> Console de Execução
+                    </span>
+                </div>
+                <div id="consoleArea" class="flex-grow overflow-y-auto text-emerald-400 font-mono text-sm space-y-1 no-scrollbar pb-4 pr-16">
+                    <div class="text-gray-500">> O painel está pronto. Aguardando configurações...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="telaResultados" class="hidden flex-col h-full flex-grow fade-in bg-gray-50 dark:bg-gray-900">
+            <div class="bg-zd-green dark:bg-zd-dark p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm z-10 gap-4 sm:gap-0">
+                <div>
+                    <h2 class="text-2xl font-bold flex items-center gap-2"><i class="ph ph-list-checks text-emerald-400"></i> Resultados da Busca</h2>
+                    <p class="text-sm text-emerald-100 mt-1" id="resumoResultados">0 tickets encontrados.</p>
+                </div>
+                <button type="button" onclick="voltarParaConfig()" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Voltar à Configuração
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 px-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+                <span class="font-bold text-gray-600 dark:text-gray-300 text-sm flex items-center gap-2"><i class="ph ph-export"></i> Exportar Dados:</span>
+                <div class="flex gap-2">
+                    <button type="button" onclick="exportarTXT()" class="p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"><i class="ph ph-file-text text-xl"></i></button>
+                    <button type="button" onclick="exportarCSV()" class="p-2 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md hover:bg-green-100 dark:hover:bg-green-900/50 transition-all"><i class="ph ph-file-csv text-xl"></i></button>
+                    <button type="button" onclick="exportarWord()" class="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all"><i class="ph ph-file-doc text-xl"></i></button>
+                    <button type="button" onclick="exportarPDF()" class="p-2 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 transition-all"><i class="ph ph-file-pdf text-xl"></i></button>
+                </div>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-4 sm:p-6 relative bg-gray-50 dark:bg-gray-900">
+                <div id="areaImpressaoPDF" class="max-w-4xl mx-auto">
+                    <div id="pdfHeader" class="hidden mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <h1 class="text-zd-green dark:text-emerald-400 text-2xl font-bold border-b-2 border-zd-green dark:border-emerald-500 pb-2">Relatório de Tickets - Zendesk</h1>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-2" id="pdfData"></p>
+                    </div>
+                    <div id="listaTicketsContainer" class="flex flex-col gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
